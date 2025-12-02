@@ -5,7 +5,6 @@ import {
   CardBody,
   CardHeader,
   Chip,
-  Progress,
   Button,
   Divider,
 } from "@heroui/react";
@@ -16,7 +15,6 @@ interface DocumentDetailsProps {
     title: string;
     category: string;
     status: string;
-    confidenceScore: number;
     usageCount: number;
     uploaderId: string;
     createdAt: string;
@@ -158,84 +156,64 @@ export default function DocumentDetails({ doc }: DocumentDetailsProps) {
           </Card>
         </div>
 
-        {/* Right Column: Truth Engine */}
+        {/* Right Column: Statistics */}
         <div className="space-y-6">
           <Card className="w-full border-t-4 border-t-blue-600">
             <CardHeader className="px-6 pt-6 pb-0 flex flex-col items-start gap-1">
               <div className="flex items-center gap-2 text-blue-600 font-bold uppercase tracking-wider text-xs">
                 <span className="material-icons-outlined text-sm">
-                  verified_user
+                  insert_drive_file
                 </span>
-                Truth Engine
+                Document Info
               </div>
               <h3 className="text-xl font-bold text-zinc-900 dark:text-white">
-                Verification Status
+                Usage Statistics
               </h3>
             </CardHeader>
-            <CardBody className="px-6 py-8 flex flex-col items-center text-center">
-              <div className="mb-2">
-                <span className="text-6xl font-bold text-zinc-900 dark:text-white tracking-tight">
-                  {doc.confidenceScore}%
-                </span>
-              </div>
-              <p className="text-zinc-500 font-medium mb-6">Confidence Score</p>
-
-              <Progress
-                value={doc.confidenceScore}
-                color={
-                  doc.confidenceScore > 90
-                    ? "success"
-                    : doc.confidenceScore > 70
-                    ? "warning"
-                    : "danger"
-                }
-                className="w-full h-3 mb-2"
-                aria-label="Confidence Score"
-              />
-
-              <div className="flex justify-between w-full text-xs text-zinc-400 px-1">
-                <span>Unreliable</span>
-                <span>Verified Source</span>
-              </div>
-
-              <Divider className="my-8" />
-
+            <CardBody className="px-6 py-8">
               <div className="w-full flex items-center justify-between bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
-                    <span className="material-icons-outlined">chat</span>
+                    <span className="material-icons-outlined">visibility</span>
                   </div>
                   <div className="text-left">
                     <p className="text-xs text-zinc-500 font-medium uppercase">
-                      Queries Answered
+                      Total Views
                     </p>
-                    <p className="text-lg font-bold text-zinc-900 dark:text-white">
+                    <p className="text-2xl font-bold text-zinc-900 dark:text-white">
                       {doc.usageCount || 0}
                     </p>
                   </div>
                 </div>
-                <div className="h-8 w-[1px] bg-zinc-200 dark:bg-zinc-700 mx-2" />
-                <div className="text-right">
-                  <p className="text-xs text-green-600 font-medium">+12%</p>
-                  <p className="text-[10px] text-zinc-400">this week</p>
+              </div>
+
+              <Divider className="my-6" />
+
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-zinc-600 dark:text-zinc-400">Status</span>
+                  <Chip
+                    color={statusColorMap[doc.status]}
+                    variant="flat"
+                    size="sm"
+                    className="capitalize"
+                  >
+                    {doc.status}
+                  </Chip>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-zinc-600 dark:text-zinc-400">Category</span>
+                  <span className="text-sm font-medium text-zinc-900 dark:text-white capitalize">
+                    {doc.category}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-zinc-600 dark:text-zinc-400">Uploaded</span>
+                  <span className="text-sm font-medium text-zinc-900 dark:text-white">
+                    {new Date(doc.createdAt).toLocaleDateString()}
+                  </span>
                 </div>
               </div>
-            </CardBody>
-          </Card>
-
-          <Card className="w-full bg-zinc-900 text-white">
-            <CardBody className="px-6 py-6">
-              <h4 className="font-semibold mb-2 flex items-center gap-2">
-                <span className="material-icons-outlined text-yellow-400">
-                  lightbulb
-                </span>
-                AI Analysis
-              </h4>
-              <p className="text-sm text-zinc-300 leading-relaxed">
-                This document has been cross-referenced with 3 other official
-                sources. The content appears consistent with the 2024
-                legislative framework.
-              </p>
             </CardBody>
           </Card>
         </div>

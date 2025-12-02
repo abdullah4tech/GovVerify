@@ -5,7 +5,6 @@ export interface IDocument extends MongooseDocument {
   url: string;
   category: string;
   status: "verified" | "pending" | "rejected";
-  confidenceScore: number;
   usageCount: number;
   uploaderId: string;
   createdAt: Date;
@@ -20,9 +19,8 @@ const DocumentSchema = new Schema<IDocument>(
     status: {
       type: String,
       enum: ["verified", "pending", "rejected"],
-      default: "pending",
+      default: "verified",
     },
-    confidenceScore: { type: Number, default: 0 },
     usageCount: { type: Number, default: 0 },
     uploaderId: { type: String, required: true },
   },

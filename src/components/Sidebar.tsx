@@ -8,6 +8,7 @@ import {
   CloudArrowUpIcon,
   UsersIcon,
   BuildingLibraryIcon,
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
 
 const Sidebar = () => {
@@ -17,6 +18,11 @@ const Sidebar = () => {
     { href: "/dashboard", label: "Dashboard", icon: HomeIcon },
     { href: "/upload", label: "Upload", icon: CloudArrowUpIcon },
     { href: "/users", label: "Users", icon: UsersIcon },
+    {
+      href: "/whatsapp",
+      label: "WhatsApp",
+      icon: ChatBubbleLeftRightIcon,
+    },
   ];
 
   return (

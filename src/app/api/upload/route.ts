@@ -8,20 +8,18 @@ export async function POST(request: Request): Promise<NextResponse> {
     const jsonResponse = await handleUpload({
       body,
       request,
-      onBeforeGenerateToken: async (pathname, clientPayload) => {
+      onBeforeGenerateToken: async () => {
         // Authenticate the user here if needed
         // const { userId } = auth();
         // if (!userId) throw new Error('Unauthorized');
 
         return {
           allowedContentTypes: ["application/pdf"],
-          tokenPayload: JSON.stringify({
-            // optional, sent to your server on upload completion
-            // userId,
-          }),
+          // Increase max file size to 100MB for better compatibility
+          maxFileSize: 100 * 1024 * 1024, // 100MB
         };
       },
-      onUploadCompleted: async ({ blob, tokenPayload }) => {
+      onUploadCompleted: async ({ blob }) => {
         // This is called when the upload is complete
         console.log("blob uploaded", blob.url);
       },
@@ -31,7 +29,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   } catch (error) {
     return NextResponse.json(
       { error: (error as Error).message },
-      { status: 400 } // The webhook will retry 5 times automatically if the status code is 500-599
+      { status: 400 }
     );
   }
 }

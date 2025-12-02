@@ -21,7 +21,6 @@ interface Document {
   title: string;
   category: string;
   status: string;
-  confidenceScore: number;
   createdAt: string;
   uploaderId: string;
 }
@@ -168,7 +167,6 @@ export default function DocumentTable({
           <TableColumn>TITLE</TableColumn>
           <TableColumn>CATEGORY</TableColumn>
           <TableColumn>STATUS</TableColumn>
-          <TableColumn>CONFIDENCE</TableColumn>
           <TableColumn>DATE</TableColumn>
         </TableHeader>
         <TableBody items={items} emptyContent={"No documents found"}>
@@ -192,22 +190,6 @@ export default function DocumentTable({
                 >
                   {item.status}
                 </Chip>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      item.confidenceScore > 90
-                        ? "bg-green-500"
-                        : item.confidenceScore > 70
-                        ? "bg-yellow-500"
-                        : "bg-red-500"
-                    }`}
-                  />
-                  <span className="text-zinc-700 dark:text-zinc-200">
-                    {item.confidenceScore}%
-                  </span>
-                </div>
               </TableCell>
               <TableCell className="text-zinc-700 dark:text-zinc-300">
                 {new Date(item.createdAt).toLocaleDateString()}
