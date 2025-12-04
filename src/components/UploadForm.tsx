@@ -256,7 +256,6 @@ export default function UploadForm() {
               name="file"
               ref={inputFileRef}
               type="file"
-              required
               accept="application/pdf"
               multiple
               className="hidden"
