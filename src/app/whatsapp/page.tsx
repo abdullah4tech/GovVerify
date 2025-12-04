@@ -11,10 +11,9 @@ import {
   Divider,
 } from "@heroui/react";
 
-const API_KEY =
-  "b5a5a2b9aadef40dec688ed92b1464e59719deb13b6d7425820b30c16d21392d";
-const BASE_URL = "https://whatsapp-server-integration-e9lu.onrender.com";
-const CHATBOT_ID = "cmiounofx0003jj043l87laro";
+const API_KEY = process.env.NEXT_PUBLIC_GENELINE_X_API_KEY!;
+const BASE_URL = process.env.NEXT_PUBLIC_WHATSAPP_BASE_URL || "https://whatsapp-server-integration-emc7.onrender.com";
+const CHATBOT_ID = process.env.NEXT_PUBLIC_GENELINE_X_CHATBOT_ID!;
 
 export default function WhatsAppIntegration() {
   const [qrCode, setQRCode] = useState<string | null>(null);
