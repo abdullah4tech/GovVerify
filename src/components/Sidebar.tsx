@@ -9,6 +9,7 @@ import {
   UsersIcon,
   BuildingLibraryIcon,
   ChatBubbleLeftRightIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 
 const Sidebar = () => {
@@ -22,6 +23,11 @@ const Sidebar = () => {
       href: "/whatsapp",
       label: "WhatsApp",
       icon: ChatBubbleLeftRightIcon,
+    },
+    {
+      href: "/escalation",
+      label: "Escalation",
+      icon: ExclamationTriangleIcon,
     },
   ];
 
