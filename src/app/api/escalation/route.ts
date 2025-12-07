@@ -10,7 +10,7 @@ export async function GET() {
     const endpoints = {
       urgentThreats: `${API_BASE_URL}/analytics/threats/urgent`,
       unansweredQueries: `${API_BASE_URL}/citizen-stats/unanswered-queries`,
-      pendingVerifications: `${API_BASE_URL}/feeds/verifications?status=PENDING`,
+      pendingVerifications: `${API_BASE_URL}/feeds/verifications?status=UNVERIFIED`,
       dataGaps: `${API_BASE_URL}/analytics/data-gaps?limit=50`,
     };
     
@@ -61,8 +61,23 @@ export async function GET() {
     // Extract data arrays from responses (handle both array and object formats)
     const threatsArray = Array.isArray(urgentThreats) ? urgentThreats : urgentThreats.data || [];
     const queriesArray = Array.isArray(unansweredQueries) ? unansweredQueries : unansweredQueries.data || [];
-    const verificationsArray = Array.isArray(pendingVerifications) ? pendingVerifications : pendingVerifications.data || [];
+    const verificationsRaw = Array.isArray(pendingVerifications) ? pendingVerifications : pendingVerifications.data || [];
     const gapsArray = Array.isArray(dataGaps) ? dataGaps : dataGaps.data || [];
+
+    // Transform verifications to ensure proper field names and valid dates
+    const verificationsArray = verificationsRaw.map((verification: Record<string, unknown>) => ({
+      ...verification, // Include all original fields
+      _id: verification._id || verification.id || String(Math.random()),
+      contentHash: verification.claim,
+      claim: verification.claim, // Keep the claim for display
+      status: verification.status,
+      submittedAt: verification.submittedAt || 
+                   verification.submitted_at || 
+                   verification.createdAt || 
+                   verification.created_at || 
+                   verification.timestamp ||
+                   new Date().toISOString(), // Fallback to current date if no date field exists
+    }));
 
     // Calculate total items requiring attention
     systemHealth.pending_items.total_requiring_attention = 

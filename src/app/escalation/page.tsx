@@ -51,6 +51,8 @@ interface PendingVerification {
   contentHash: string;
   status: string;
   submittedAt: string;
+  claim?: string;
+  [key: string]: unknown;
 }
 
 interface DataGap {
@@ -79,13 +81,43 @@ interface EscalationData {
   systemHealth: SystemHealth;
 }
 
+// Helper function to safely format dates
+const formatDate = (dateString: string | undefined | null): string => {
+  if (!dateString) return "N/A";
+  
+  try {
+    const date = new Date(dateString);
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return "N/A";
+    }
+    return date.toLocaleDateString();
+  } catch (error) {
+    console.error("Error formatting date:", dateString, error);
+    return "N/A";
+  }
+};
+
+// Helper function to truncate long text
+const truncateText = (text: string | undefined | null, maxLength: number = 50): string => {
+  if (!text) return "N/A";
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + "...";
+};
+
 export default function EscalationPage() {
   const [data, setData] = useState<EscalationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedGap, setSelectedGap] = useState<DataGap | null>(null);
+  const [selectedVerification, setSelectedVerification] = useState<PendingVerification | null>(null);
   const [broadcasting, setBroadcasting] = useState<number | null>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { 
+    isOpen: isVerificationModalOpen, 
+    onOpen: onVerificationModalOpen, 
+    onClose: onVerificationModalClose 
+  } = useDisclosure();
 
   useEffect(() => {
     fetchEscalationData();
@@ -298,7 +330,7 @@ export default function EscalationPage() {
                           </Chip>
                         </TableCell>
                         <TableCell className="text-zinc-900 dark:text-white">
-                          {new Date(threat.createdAt).toLocaleDateString()}
+                          {formatDate(threat.createdAt)}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -347,7 +379,7 @@ export default function EscalationPage() {
                           <Chip variant="bordered">{query.type}</Chip>
                         </TableCell>
                         <TableCell className="text-zinc-900 dark:text-white">
-                          {new Date(query.createdAt).toLocaleDateString()}
+                          {formatDate(query.createdAt)}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -385,14 +417,25 @@ export default function EscalationPage() {
                 <Table aria-label="Pending verifications table">
                   <TableHeader>
                     <TableColumn>CONTENT HASH</TableColumn>
+                    <TableColumn>CLAIM</TableColumn>
                     <TableColumn>STATUS</TableColumn>
                     <TableColumn>SUBMITTED</TableColumn>
                   </TableHeader>
                   <TableBody>
                     {(data?.pendingVerifications || []).map((verification) => (
-                      <TableRow key={verification._id}>
+                      <TableRow 
+                        key={verification._id}
+                        className="cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        onClick={() => {
+                          setSelectedVerification(verification);
+                          onVerificationModalOpen();
+                        }}
+                      >
                         <TableCell className="font-mono text-sm text-zinc-900 dark:text-white">
-                          {verification.contentHash}
+                          {truncateText(verification.contentHash, 30)}
+                        </TableCell>
+                        <TableCell className="text-zinc-900 dark:text-white">
+                          {truncateText(verification.claim, 50)}
                         </TableCell>
                         <TableCell>
                           <Chip color={statusColorMap[verification.status] || "default"} variant="flat">
@@ -400,7 +443,7 @@ export default function EscalationPage() {
                           </Chip>
                         </TableCell>
                         <TableCell className="text-zinc-900 dark:text-white">
-                          {new Date(verification.submittedAt).toLocaleDateString()}
+                          {formatDate(verification.submittedAt)}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -466,7 +509,7 @@ export default function EscalationPage() {
                         </TableCell>
                         <TableCell className="text-zinc-900 dark:text-white">{gap.requestCount}</TableCell>
                         <TableCell className="text-zinc-900 dark:text-white">
-                          {new Date(gap.requestedAt).toLocaleDateString()}
+                          {formatDate(gap.requestedAt)}
                         </TableCell>
                         <TableCell>
                           <Button
@@ -557,7 +600,7 @@ export default function EscalationPage() {
                     <div>
                       <label className="text-sm font-semibold text-zinc-900 dark:text-white">Requested At</label>
                       <p className="mt-1 text-zinc-900 dark:text-zinc-100">
-                        {new Date(selectedGap.requestedAt).toLocaleString()}
+                        {formatDate(selectedGap.requestedAt)}
                       </p>
                     </div>
                   </div>
@@ -578,6 +621,71 @@ export default function EscalationPage() {
                     Broadcast Message
                   </Button>
                 )}
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      {/* Verification Details Modal */}
+      <Modal 
+        isOpen={isVerificationModalOpen} 
+        onClose={onVerificationModalClose}
+        size="3xl"
+        scrollBehavior="inside"
+      >
+        <ModalContent>
+          {() => (
+            <>
+              <ModalHeader className="flex flex-col gap-1 text-zinc-900 dark:text-white">
+                <h2 className="text-2xl font-bold">Verification Details</h2>
+              </ModalHeader>
+              <ModalBody>
+                {selectedVerification && (
+                  <div className="space-y-6">
+                    <div>
+                      <label className="text-sm font-semibold text-zinc-900 dark:text-white">Content Hash</label>
+                      <p className="mt-1 text-zinc-900 dark:text-zinc-100 font-mono text-sm break-all">
+                        {selectedVerification.contentHash}
+                      </p>
+                    </div>
+
+                    {selectedVerification.claim && (
+                      <div>
+                        <label className="text-sm font-semibold text-zinc-900 dark:text-white">Claim</label>
+                        <p className="mt-1 text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap">
+                          {selectedVerification.claim}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-semibold text-zinc-900 dark:text-white">Status</label>
+                        <p className="mt-1">
+                          <Chip 
+                            color={statusColorMap[selectedVerification.status] || "default"} 
+                            variant="flat"
+                          >
+                            {selectedVerification.status}
+                          </Chip>
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-semibold text-zinc-900 dark:text-white">Submitted At</label>
+                        <p className="mt-1 text-zinc-900 dark:text-zinc-100">
+                          {formatDate(selectedVerification.submittedAt)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" variant="light" onPress={onVerificationModalClose}>
+                  Close
+                </Button>
               </ModalFooter>
             </>
           )}
