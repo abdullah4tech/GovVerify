@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
     // !! WARN !!
     ignoreBuildErrors: true,
   },
+  // Ensure proper CSS optimization
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production",
+  },
+  // Optimize production builds
+  swcMinify: true,
+  // Ensure proper static optimization
+  reactStrictMode: true,
 };
 
 export default nextConfig;
