@@ -6,7 +6,6 @@ import clsx from "clsx";
 import {
   HomeIcon,
   CloudArrowUpIcon,
-  UsersIcon,
   BuildingLibraryIcon,
   ChatBubbleLeftRightIcon,
   ExclamationTriangleIcon,
@@ -18,7 +17,6 @@ const Sidebar = () => {
   const links = [
     { href: "/dashboard", label: "Dashboard", icon: HomeIcon },
     { href: "/upload", label: "Upload", icon: CloudArrowUpIcon },
-    { href: "/users", label: "Users", icon: UsersIcon },
     {
       href: "/whatsapp",
       label: "WhatsApp",
