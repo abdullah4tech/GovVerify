@@ -14,7 +14,12 @@ export async function POST(request: Request): Promise<NextResponse> {
         // if (!userId) throw new Error('Unauthorized');
 
         return {
-          allowedContentTypes: ["application/pdf"],
+          allowedContentTypes: [
+            "application/pdf",
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+          ],
           // Increase max file size to 100MB for better compatibility
           maxFileSize: 100 * 1024 * 1024, // 100MB
         };
