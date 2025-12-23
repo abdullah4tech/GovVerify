@@ -2,17 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { io, Socket } from "socket.io-client";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Chip,
-  Divider,
-} from "@heroui/react";
+import { Icon } from "@iconify/react";
+import { cn } from "@/lib/utils";
 
 const API_KEY = process.env.NEXT_PUBLIC_GENELINE_X_API_KEY!;
-const BASE_URL = process.env.NEXT_PUBLIC_WHATSAPP_BASE_URL || "http://localhost:5000";
+const BASE_URL =
+  process.env.NEXT_PUBLIC_WHATSAPP_BASE_URL || "http://localhost:5000";
 const CHATBOT_ID = process.env.NEXT_PUBLIC_GENELINE_X_CHATBOT_ID!;
 
 export default function WhatsAppIntegration() {
@@ -26,12 +21,12 @@ export default function WhatsAppIntegration() {
 
   useEffect(() => {
     // Check cached status
-    const cachedPhone = localStorage.getItem('whatsapp_phone');
-    const cachedStatus = localStorage.getItem('whatsapp_status');
-    
-    if (cachedPhone && cachedStatus === 'connected') {
+    const cachedPhone = localStorage.getItem("whatsapp_phone");
+    const cachedStatus = localStorage.getItem("whatsapp_status");
+
+    if (cachedPhone && cachedStatus === "connected") {
       setPhoneNumber(cachedPhone);
-      setStatus('connected');
+      setStatus("connected");
     }
 
     // Initialize Socket.IO
@@ -56,64 +51,73 @@ export default function WhatsAppIntegration() {
     });
 
     // Listen for connection success
-    socketInstance.on(`connected:${CHATBOT_ID}`, (data: { phoneNumber: string }) => {
-      console.log("✅ WhatsApp connected!", data.phoneNumber);
-      setPhoneNumber(data.phoneNumber);
-      setStatus("connected");
-      setStatusMessage("WhatsApp connected successfully");
-      setQRCode(null);
-      setIsLoading(false);
-      setError(null);
-      
-      // Cache in localStorage
-      localStorage.setItem('whatsapp_phone', data.phoneNumber);
-      localStorage.setItem('whatsapp_status', 'connected');
-    });
+    socketInstance.on(
+      `connected:${CHATBOT_ID}`,
+      (data: { phoneNumber: string }) => {
+        console.log("✅ WhatsApp connected!", data.phoneNumber);
+        setPhoneNumber(data.phoneNumber);
+        setStatus("connected");
+        setStatusMessage("WhatsApp connected successfully");
+        setQRCode(null);
+        setIsLoading(false);
+        setError(null);
+
+        // Cache in localStorage
+        localStorage.setItem("whatsapp_phone", data.phoneNumber);
+        localStorage.setItem("whatsapp_status", "connected");
+      }
+    );
 
     // Listen for disconnection
-    socketInstance.on(`disconnected:${CHATBOT_ID}`, (data: { reason: string }) => {
-      console.log("❌ WhatsApp disconnected:", data.reason);
-      setStatus("disconnected");
-      setPhoneNumber(null);
-      setQRCode(null);
-      setIsLoading(false);
-      
-      if (data.reason === "logout") {
-        setStatusMessage("Logged out. Click reconnect to get new QR code.");
-      } else if (data.reason === "reconnection_failed") {
-        setStatusMessage("Connection lost. Please reconnect.");
-      } else {
-        setStatusMessage("Disconnected from WhatsApp");
+    socketInstance.on(
+      `disconnected:${CHATBOT_ID}`,
+      (data: { reason: string }) => {
+        console.log("❌ WhatsApp disconnected:", data.reason);
+        setStatus("disconnected");
+        setPhoneNumber(null);
+        setQRCode(null);
+        setIsLoading(false);
+
+        if (data.reason === "logout") {
+          setStatusMessage("Logged out. Click reconnect to get new QR code.");
+        } else if (data.reason === "reconnection_failed") {
+          setStatusMessage("Connection lost. Please reconnect.");
+        } else {
+          setStatusMessage("Disconnected from WhatsApp");
+        }
+
+        // Clear cache
+        localStorage.removeItem("whatsapp_phone");
+        localStorage.setItem("whatsapp_status", "disconnected");
       }
-      
-      // Clear cache
-      localStorage.removeItem('whatsapp_phone');
-      localStorage.setItem('whatsapp_status', 'disconnected');
-    });
+    );
 
     // Listen for status updates
-    socketInstance.on(`status:${CHATBOT_ID}`, (data: { 
-      status: string; 
-      message?: string; 
-      percent?: number;
-      phoneNumber?: string;
-      state?: string;
-    }) => {
-      console.log("📊 Status update:", data);
-      setStatusMessage(data.message || "");
-      
-      if (data.status === "authenticating") {
-        setStatus("authenticating");
-        setStatusMessage("Authenticating...");
-      } else if (data.status === "loading") {
-        setStatus("loading");
-        setStatusMessage(`Loading WhatsApp... ${data.percent || 0}%`);
-      } else if (data.status === "qr_generated") {
-        setStatus("awaiting_scan");
-      } else if (data.status === "connected") {
-        setStatus("connected");
+    socketInstance.on(
+      `status:${CHATBOT_ID}`,
+      (data: {
+        status: string;
+        message?: string;
+        percent?: number;
+        phoneNumber?: string;
+        state?: string;
+      }) => {
+        console.log("📊 Status update:", data);
+        setStatusMessage(data.message || "");
+
+        if (data.status === "authenticating") {
+          setStatus("authenticating");
+          setStatusMessage("Authenticating...");
+        } else if (data.status === "loading") {
+          setStatus("loading");
+          setStatusMessage(`Loading WhatsApp... ${data.percent || 0}%`);
+        } else if (data.status === "qr_generated") {
+          setStatus("awaiting_scan");
+        } else if (data.status === "connected") {
+          setStatus("connected");
+        }
       }
-    });
+    );
 
     // Handle Socket.IO connection events
     socketInstance.on("connect", () => {
@@ -126,7 +130,9 @@ export default function WhatsAppIntegration() {
 
     socketInstance.on("connect_error", (error: Error) => {
       console.error("🔌 Socket.IO connection error:", error);
-      setError("Failed to connect to WhatsApp server. Please check if the server is running.");
+      setError(
+        "Failed to connect to WhatsApp server. Please check if the server is running."
+      );
     });
 
     setSocket(socketInstance);
@@ -144,9 +150,9 @@ export default function WhatsAppIntegration() {
       setError(null);
       setStatus("initializing");
       setStatusMessage("Initializing WhatsApp connection...");
-      
+
       console.log("🚀 Initializing WhatsApp client");
-      
+
       const response = await fetch(`${BASE_URL}/init`, {
         method: "POST",
         headers: {
@@ -167,19 +173,23 @@ export default function WhatsAppIntegration() {
         setPhoneNumber(data.phoneNumber);
         setStatus("connected");
         setStatusMessage("Already connected!");
-        localStorage.setItem('whatsapp_phone', data.phoneNumber);
-        localStorage.setItem('whatsapp_status', 'connected');
+        localStorage.setItem("whatsapp_phone", data.phoneNumber);
+        localStorage.setItem("whatsapp_status", "connected");
       } else if (data.status === "awaiting_qr" && data.qr) {
         setQRCode(data.qr);
         setStatus("awaiting_scan");
         setStatusMessage("Scan QR code with WhatsApp");
       }
-      
+
       setIsLoading(false);
     } catch (error) {
       console.error("❌ Initialization error:", error);
       setStatus("error");
-      setError(error instanceof Error ? error.message : "Failed to initialize. Please try again.");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to initialize. Please try again."
+      );
       setStatusMessage("Failed to initialize");
       setIsLoading(false);
     }
@@ -189,7 +199,7 @@ export default function WhatsAppIntegration() {
     try {
       setIsLoading(true);
       console.log("🚪 Logging out from WhatsApp");
-      
+
       const response = await fetch(`${BASE_URL}/logout`, {
         method: "POST",
         headers: {
@@ -205,11 +215,11 @@ export default function WhatsAppIntegration() {
       setPhoneNumber(null);
       setQRCode(null);
       setStatusMessage("Logged out successfully");
-      
+
       // Clear cache
-      localStorage.removeItem('whatsapp_phone');
-      localStorage.setItem('whatsapp_status', 'disconnected');
-      
+      localStorage.removeItem("whatsapp_phone");
+      localStorage.setItem("whatsapp_status", "disconnected");
+
       setIsLoading(false);
     } catch (error) {
       console.error("❌ Logout error:", error);
@@ -219,54 +229,104 @@ export default function WhatsAppIntegration() {
   };
 
   const getStatusChip = () => {
+    const chipBase =
+      "inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium border";
+
     switch (status) {
       case "connected":
         return (
-          <Chip color="success" variant="flat" size="lg">
-            ✅ Connected
-          </Chip>
+          <span
+            className={cn(
+              chipBase,
+              "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800"
+            )}
+          >
+            <Icon icon="lucide:check-circle-2" className="w-4 h-4" />
+            Connected
+          </span>
         );
       case "awaiting_scan":
         return (
-          <Chip color="warning" variant="flat" size="lg">
-            📱 Awaiting Scan
-          </Chip>
+          <span
+            className={cn(
+              chipBase,
+              "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
+            )}
+          >
+            <Icon icon="lucide:smartphone" className="w-4 h-4" />
+            Awaiting Scan
+          </span>
         );
       case "authenticating":
         return (
-          <Chip color="primary" variant="flat" size="lg">
-            🔐 Authenticating
-          </Chip>
+          <span
+            className={cn(
+              chipBase,
+              "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800"
+            )}
+          >
+            <Icon icon="lucide:lock" className="w-4 h-4" />
+            Authenticating
+          </span>
         );
       case "loading":
         return (
-          <Chip color="primary" variant="flat" size="lg">
-            ⏳ Loading
-          </Chip>
+          <span
+            className={cn(
+              chipBase,
+              "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800"
+            )}
+          >
+            <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin" />
+            Loading
+          </span>
         );
       case "initializing":
         return (
-          <Chip color="default" variant="flat" size="lg">
-            🔄 Initializing
-          </Chip>
+          <span
+            className={cn(
+              chipBase,
+              "bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700"
+            )}
+          >
+            <Icon icon="lucide:refresh-cw" className="w-4 h-4 animate-spin" />
+            Initializing
+          </span>
         );
       case "error":
         return (
-          <Chip color="danger" variant="flat" size="lg">
-            ❌ Error
-          </Chip>
+          <span
+            className={cn(
+              chipBase,
+              "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800"
+            )}
+          >
+            <Icon icon="lucide:alert-circle" className="w-4 h-4" />
+            Error
+          </span>
         );
       case "disconnected":
         return (
-          <Chip color="default" variant="flat" size="lg">
-            ⭕ Disconnected
-          </Chip>
+          <span
+            className={cn(
+              chipBase,
+              "bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700"
+            )}
+          >
+            <Icon icon="lucide:circle-off" className="w-4 h-4" />
+            Disconnected
+          </span>
         );
       default:
         return (
-          <Chip color="default" variant="flat" size="lg">
+          <span
+            className={cn(
+              chipBase,
+              "bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700"
+            )}
+          >
             {status}
-          </Chip>
+          </span>
         );
     }
   };
@@ -276,14 +336,12 @@ export default function WhatsAppIntegration() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <span className="material-icons-outlined text-green-600 text-4xl">
-            whatsapp
-          </span>
+          <Icon icon="logos:whatsapp-icon" className="w-10 h-10" />
           <div>
             <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">
               WhatsApp Integration
             </h1>
-            <p className="text-zinc-500 mt-1">
+            <p className="text-zinc-500 dark:text-zinc-400 mt-1">
               Connect your WhatsApp account to the chatbot platform
             </p>
           </div>
@@ -293,16 +351,14 @@ export default function WhatsAppIntegration() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Instructions */}
         <div className="lg:col-span-1 space-y-6">
-          <Card className="border-t-4 border-t-green-600">
-            <CardHeader className="px-6 pt-6 pb-0">
+          <div className="bg-white dark:bg-zinc-950 rounded-2xl border-t-4 border-t-green-600 border-x border-b border-zinc-200 dark:border-zinc-800 shadow-sm">
+            <div className="px-6 pt-6 pb-4">
               <h3 className="text-lg font-semibold text-zinc-800 dark:text-white flex items-center gap-2">
-                <span className="material-icons-outlined text-blue-600">
-                  info
-                </span>
+                <Icon icon="lucide:info" className="w-5 h-5 text-blue-600" />
                 How to Connect
               </h3>
-            </CardHeader>
-            <CardBody className="px-6 py-6">
+            </div>
+            <div className="px-6 pb-6">
               <ol className="space-y-4 text-sm text-zinc-700 dark:text-zinc-300">
                 <li className="flex gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center text-xs font-bold">
@@ -340,66 +396,71 @@ export default function WhatsAppIntegration() {
                 </li>
               </ol>
 
-              <Divider className="my-6" />
+              <div className="my-6 h-px bg-zinc-200 dark:bg-zinc-800" />
 
               <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
                 <div className="flex gap-2 mb-2">
-                  <span className="material-icons-outlined text-blue-600 text-sm">
-                    security
-                  </span>
+                  <Icon
+                    icon="lucide:shield-check"
+                    className="w-4 h-4 text-blue-600"
+                  />
                   <strong className="text-sm text-blue-900 dark:text-blue-100">
                     Privacy & Security
                   </strong>
                 </div>
                 <p className="text-xs text-blue-800 dark:text-blue-200">
-                  Your messages are end-to-end encrypted. We never store or
-                  read your personal messages.
+                  Your messages are end-to-end encrypted. We never store or read
+                  your personal messages.
                 </p>
               </div>
-            </CardBody>
-          </Card>
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader className="px-6 pt-6 pb-0">
+          <div className="bg-white dark:bg-zinc-950 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+            <div className="px-6 pt-6 pb-4">
               <h3 className="text-lg font-semibold text-zinc-800 dark:text-white flex items-center gap-2">
-                <span className="material-icons-outlined text-yellow-600">
-                  lightbulb
-                </span>
+                <Icon
+                  icon="lucide:lightbulb"
+                  className="w-5 h-5 text-yellow-600"
+                />
                 Tips
               </h3>
-            </CardHeader>
-            <CardBody className="px-6 py-6">
+            </div>
+            <div className="px-6 pb-6">
               <ul className="space-y-3 text-sm text-zinc-700 dark:text-zinc-300">
                 <li className="flex gap-2">
-                  <span className="material-icons-outlined text-xs text-zinc-400">
-                    check_circle
-                  </span>
+                  <Icon
+                    icon="lucide:check-circle"
+                    className="w-4 h-4 text-zinc-400"
+                  />
                   <span>QR code refreshes automatically every 30 seconds</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="material-icons-outlined text-xs text-zinc-400">
-                    check_circle
-                  </span>
+                  <Icon
+                    icon="lucide:check-circle"
+                    className="w-4 h-4 text-zinc-400"
+                  />
                   <span>Keep your phone connected to the internet</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="material-icons-outlined text-xs text-zinc-400">
-                    check_circle
-                  </span>
+                  <Icon
+                    icon="lucide:check-circle"
+                    className="w-4 h-4 text-zinc-400"
+                  />
                   <span>
                     You can disconnect anytime from your phone&apos;s linked
                     devices
                   </span>
                 </li>
               </ul>
-            </CardBody>
-          </Card>
+            </div>
+          </div>
         </div>
 
         {/* Right Column: QR Code */}
         <div className="lg:col-span-2">
-          <Card className="h-full">
-            <CardHeader className="px-6 pt-6 pb-0 flex flex-row items-center justify-between">
+          <div className="bg-white dark:bg-zinc-950 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col">
+            <div className="px-6 pt-6 pb-4 flex flex-row items-center justify-between border-b border-zinc-100 dark:border-zinc-900">
               <div>
                 <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">
                   Connection Status
@@ -409,11 +470,14 @@ export default function WhatsAppIntegration() {
                 </p>
               </div>
               {getStatusChip()}
-            </CardHeader>
-            <CardBody className="px-6 py-8 flex flex-col items-center justify-center min-h-[500px]">
+            </div>
+            <div className="px-6 py-8 flex flex-col items-center justify-center flex-grow min-h-[500px]">
               {isLoading && (
                 <div className="text-center">
-                  <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
+                  <Icon
+                    icon="lucide:loader-2"
+                    className="animate-spin h-12 w-12 text-green-600 mb-4 mx-auto"
+                  />
                   <p className="text-zinc-600 dark:text-zinc-400">
                     {statusMessage || "Initializing connection..."}
                   </p>
@@ -422,51 +486,47 @@ export default function WhatsAppIntegration() {
 
               {error && (
                 <div className="text-center max-w-md">
-                  <span className="material-icons-outlined text-6xl text-red-500 mb-4">
-                    error_outline
-                  </span>
-                  <p className="text-red-600 dark:text-red-400 mb-4">
-                    {error}
-                  </p>
-                  <Button
-                    color="primary"
+                  <Icon
+                    icon="lucide:alert-circle"
+                    className="w-16 h-16 text-red-500 mb-4 mx-auto"
+                  />
+                  <p className="text-red-600 dark:text-red-400 mb-6">{error}</p>
+                  <button
                     onClick={handleInitialize}
-                    startContent={
-                      <span className="material-icons-outlined">refresh</span>
-                    }
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium"
                   >
+                    <Icon icon="lucide:refresh-cw" className="w-4 h-4" />
                     Retry Connection
-                  </Button>
+                  </button>
                 </div>
               )}
 
               {status === "disconnected" && !isLoading && !error && !qrCode && (
                 <div className="text-center max-w-md">
-                  <span className="material-icons-outlined text-6xl text-zinc-400 mb-4">
-                    phonelink_off
-                  </span>
+                  <Icon
+                    icon="lucide:smartphone-nfc"
+                    className="w-16 h-16 text-zinc-400 mb-4 mx-auto"
+                  />
                   <h3 className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">
                     WhatsApp Not Connected
                   </h3>
                   <p className="text-zinc-600 dark:text-zinc-400 mb-6">
-                    {statusMessage || "Click the button below to connect your WhatsApp account"}
+                    {statusMessage ||
+                      "Click the button below to connect your WhatsApp account"}
                   </p>
-                  <Button
-                    color="success"
-                    size="lg"
+                  <button
                     onClick={handleInitialize}
-                    startContent={
-                      <span className="material-icons-outlined">qr_code_scanner</span>
-                    }
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-semibold shadow-lg shadow-green-600/20"
                   >
+                    <Icon icon="lucide:qr-code" className="w-5 h-5" />
                     Connect WhatsApp
-                  </Button>
+                  </button>
                 </div>
               )}
 
               {qrCode && !isLoading && !error && (
                 <div className="text-center">
-                  <div className="bg-white p-6 rounded-2xl shadow-lg mb-4 inline-block">
+                  <div className="bg-white p-6 rounded-2xl shadow-lg mb-6 inline-block border border-zinc-100">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={qrCode}
@@ -477,37 +537,35 @@ export default function WhatsAppIntegration() {
                   <p className="text-zinc-900 dark:text-white font-semibold mb-2">
                     Scan this QR code with WhatsApp
                   </p>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-                    {statusMessage || "Open WhatsApp → Linked Devices → Link a Device"}
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">
+                    {statusMessage ||
+                      "Open WhatsApp → Linked Devices → Link a Device"}
                   </p>
-                  <Button
-                    variant="light"
-                    color="primary"
+                  <button
                     onClick={handleInitialize}
-                    className="mt-4"
-                    startContent={
-                      <span className="material-icons-outlined">refresh</span>
-                    }
+                    className="inline-flex items-center gap-2 px-4 py-2 text-primary hover:bg-primary/10 rounded-lg transition-colors font-medium"
                   >
+                    <Icon icon="lucide:refresh-cw" className="w-4 h-4" />
                     Refresh QR Code
-                  </Button>
+                  </button>
                 </div>
               )}
 
               {phoneNumber && !isLoading && !error && !qrCode && (
                 <div className="text-center max-w-md">
                   <div className="bg-green-100 dark:bg-green-900/30 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
-                    <span className="material-icons-outlined text-5xl text-green-600 dark:text-green-400">
-                      check_circle
-                    </span>
+                    <Icon
+                      icon="lucide:check-circle-2"
+                      className="w-12 h-12 text-green-600 dark:text-green-400"
+                    />
                   </div>
                   <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">
                     Successfully Connected!
                   </h3>
-                  <p className="text-zinc-600 dark:text-zinc-400 mb-4">
+                  <p className="text-zinc-600 dark:text-zinc-400 mb-6">
                     Your WhatsApp account is now linked to the chatbot platform
                   </p>
-                  <div className="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-lg mb-6">
+                  <div className="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-lg mb-8 border border-zinc-100 dark:border-zinc-800">
                     <p className="text-sm text-zinc-500 mb-1">
                       Connected Number
                     </p>
@@ -515,37 +573,29 @@ export default function WhatsAppIntegration() {
                       {phoneNumber}
                     </p>
                   </div>
-                  <div className="flex gap-3 justify-center">
-                    <Button
-                      color="success"
-                      variant="flat"
-                      startContent={
-                        <span className="material-icons-outlined">chat</span>
-                      }
-                    >
+                  <div className="flex gap-4 justify-center">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg font-medium">
+                      <Icon icon="lucide:message-circle" className="w-4 h-4" />
                       Chatbot Active
-                    </Button>
-                    <Button
-                      color="danger"
-                      variant="bordered"
+                    </div>
+                    <button
                       onClick={handleLogout}
-                      isLoading={isLoading}
-                      startContent={
-                        <span className="material-icons-outlined">logout</span>
-                      }
+                      disabled={isLoading}
+                      className="inline-flex items-center gap-2 px-4 py-2 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors font-medium"
                     >
+                      <Icon icon="lucide:log-out" className="w-4 h-4" />
                       Disconnect
-                    </Button>
+                    </button>
                   </div>
                   {statusMessage && (
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-4">
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-6">
                       {statusMessage}
                     </p>
                   )}
                 </div>
               )}
-            </CardBody>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>
